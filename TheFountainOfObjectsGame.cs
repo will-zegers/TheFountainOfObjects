@@ -34,15 +34,31 @@
 
     public void PerformAction(string action)
     {
-        switch (action)
+        String[] actionSplit = action.Split(' ');
+        string verb = actionSplit[0];
+        string param = actionSplit[1];
+
+        Direction direction;
+        switch (verb)
         {
-            case "ef":
-            case "enable fountain":
+            case "enable":
                 EnableFountain();
                 break;
-            default:
-                Direction direction = RoomTypeStringToEnum(action);
+            case "move":
+                direction = DirectionStringToEnum(param);
                 UpdatePlayerLocation(direction);
+                break;
+            case "shoot":
+                direction = DirectionStringToEnum(param);
+                (int, int) targetRoom = _player.Shoot(direction);
+                if (targetRoom != (-1, -1))
+                {
+                    _world.ShootIntoRoom(targetRoom);
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                }
+                break;
+            default:
                 break;
         }
     }
@@ -110,14 +126,14 @@
         return killNarratives[rng.Next(killNarratives.Length)];
     }
 
-    private Direction RoomTypeStringToEnum(string str)
+    private Direction DirectionStringToEnum(string str)
     {
         return str switch
         {
-            "move north" => Direction.North,
-            "move south" => Direction.South,
-            "move west" => Direction.West,
-            "move east" => Direction.East,
+            "north" => Direction.North,
+            "south" => Direction.South,
+            "west" => Direction.West,
+            "east" => Direction.East,
             _ => Direction.Invalid,
         };
     }

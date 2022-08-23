@@ -88,14 +88,24 @@
                 "the wall, and just as quickly, slams you against the opposite wall.", TextType.Narrative);
             GameTextPrinter.Write("It seems you've encountered a malevolent, sentient wind - a Maelstrom!", TextType.Narrative);
         }
-        else if (roomType == RoomType.Amarok)
+        else if (roomType == RoomType.Amarok || roomType == RoomType.DeadAmarok)
         {
             GameTextPrinter.Write(
                 "Stepping across the threshold of the room, your senses are overwhelmed by a fetid odor\n" +
                 "of organic rot and decay.", TextType.Narrative);
-            GameTextPrinter.Write(
-                "Somewhere in the darkness nearby, you hear the approach of plodding footsteps\n" +
-                "and wheezing that could only belong to an amarok", TextType.Narrative);
+            if (roomType == RoomType.Amarok)
+            {
+                GameTextPrinter.Write(
+                    "Somewhere in the darkness nearby, you hear the approach of plodding footsteps\n" +
+                    "and wheezing that could only belong to an amarok", TextType.Narrative);
+            }
+            else
+            {
+                GameTextPrinter.Write(
+                    "Lying in the center of the room is the unmistakable shape of large, dead creature.\n" +
+                    "It looks like your arrow found its mark; the fletching sticking out of what remains\n" +
+                    "of its right eye, and the arrowhead embedded deep in the amarok's tiny brain.", TextType.Narrative);
+            }
         }
         else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
     }
@@ -129,6 +139,35 @@
         int newRow = currentLocation.row + 1 < Rows ? currentLocation.row + 1 : Rows - 1;
         int newColumn = currentLocation.column - 2 < 0 ? 0 : currentLocation.column - 2;
         Rooms[newRow * Rows + newColumn] = RoomType.Maelstrom;
+    }
+
+    public bool ShootIntoRoom((int row, int column) targetRoom)
+    {
+        GameTextPrinter.Write("The arrow flies into the darkness of the next room.", TextType.Narrative);
+
+        int roomIndex = targetRoom.row * Rows + targetRoom.column;
+        if (Rooms[roomIndex] == RoomType.Amarok)
+        {
+            GameTextPrinter.Write(
+                "Before you can lower your bow, you hear a sickening *SQUISH* followed by a\n" +
+                "thunderous, glottal scream from beyond the darkness. Your bow arm falls by your\n" +
+                "side, and a tremor shakes the stone floor as whatever creature was in the arrow's\n" +
+                "path falls over dead.", TextType.Narrative);
+            Rooms[roomIndex] = RoomType.DeadAmarok;
+            return true;
+        } else if (Rooms[roomIndex] == RoomType.Maelstrom)
+        {
+            GameTextPrinter.Write(
+                "In an instant, you feel a blast of wind from the direction of your shot. In the\n" +
+                "midst of the nearby roaring tempest, you can hear the unmistakable sound of an\n" +
+                "arrow be thrown around the room, clattering as it bounces off of wall after wall.\n" +
+                "It seems your arrow had no effect, save from pissing off the source of the wind.", TextType.Narrative);
+            return true;
+        }
+        GameTextPrinter.Write(
+            "A moment later, you hear the sound of the arrow striking stone before clattering\n" +
+            "broken and useless to the ground. It seems you fired into an empty room.", TextType.Narrative);
+        return false;
     }
 
     private (int, int) GenerateEntranceLocation()
@@ -170,6 +209,7 @@ public enum MapSize
 
 public enum RoomType
 {
+    DeadAmarok,
     Empty,
     Entrance,
     Fountain,
