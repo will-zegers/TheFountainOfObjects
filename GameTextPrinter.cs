@@ -4,13 +4,15 @@
     {
         ConsoleColor foregroundColor = type switch
         {
+            TextType.Dead => ConsoleColor.DarkRed,
             TextType.EmptyRoom => ConsoleColor.DarkGray,
             TextType.Entrance => ConsoleColor.Yellow,
+            TextType.Fatal => ConsoleColor.Red,
             TextType.Fountain => ConsoleColor.Blue,
             TextType.Narrative => ConsoleColor.Magenta,
             TextType.UserInput => ConsoleColor.Cyan,
+            TextType.Victory => ConsoleColor.Green,
             TextType.Warning => ConsoleColor.DarkYellow,
-            TextType.Fatal => ConsoleColor.Red,
             _ => ConsoleColor.White,
         };
 
@@ -32,6 +34,7 @@
 
 public enum TextType
 {
+    Dead,
     Descriptive,
     EmptyRoom,
     Entrance,
@@ -39,5 +42,6 @@ public enum TextType
     Fountain,
     Narrative,
     UserInput,
+    Victory,
     Warning,
 }

@@ -76,20 +76,26 @@
         }
         else if (roomType == RoomType.Pit)
         {
-            GameTextPrinter.Write("As you step into the room, your foot fails to connect to solid ground as you feel your entire body weight fall forward.", TextType.Narrative);
+            GameTextPrinter.Write(
+                "As you step into the room, your foot fails to connect to solid ground as you feel your\n" +
+                "entire body weight fall forward.", TextType.Narrative);
 
         }
         else if (roomType == RoomType.Maelstrom)
         {
-            GameTextPrinter.Write("Within seconds of entering the room, a powerful gust of wind throws you against the wall, and then \n" + "" +
-                "slams you against the opposite wall.", TextType.Narrative);
+            GameTextPrinter.Write(
+                "Within seconds of entering the room, a powerful gust of wind throws you against\n" +
+                "the wall, and just as quickly, slams you against the opposite wall.", TextType.Narrative);
             GameTextPrinter.Write("It seems you've encountered a malevolent, sentient wind - a Maelstrom!", TextType.Narrative);
         }
         else if (roomType == RoomType.Amarok)
         {
-            GameTextPrinter.Write("Stepping across the threshold of the room, your senses are overwhelmed by the odor of organic rot and decay.", TextType.Narrative);
-            GameTextPrinter.Write("Somewhere in the darkness nearby, you hear the approach of plodding footsteps and wheezing that could only belong\n" +
-                "to an Amarok", TextType.Narrative);
+            GameTextPrinter.Write(
+                "Stepping across the threshold of the room, your senses are overwhelmed by a fetid odor\n" +
+                "of organic rot and decay.", TextType.Narrative);
+            GameTextPrinter.Write(
+                "Somewhere in the darkness nearby, you hear the approach of plodding footsteps\n" +
+                "and wheezing that could only belong to an amarok", TextType.Narrative);
         }
         else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
     }
