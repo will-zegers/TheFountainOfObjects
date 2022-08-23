@@ -73,7 +73,38 @@
             UpdatePlayerLocation(Direction.East, false);
             UpdatePlayerLocation(Direction.East, false);
             DisplayStatus();
+        } else if (_world.GetRoomType(_player.Row, _player.Column) == RoomType.Amarok)
+        {
+            GameTextPrinter.Write("The foot steps finally stop, inches away from where you're standing.", TextType.Fatal);
+            GameTextPrinter.Write(GenerateAmarokKill(), TextType.Fatal);
+            _isPlayerAlive = false;
         }
+    }
+
+    private string GenerateAmarokKill()
+    {
+        Random rng = new Random();
+        string[] killNarratives = new string[]
+        {
+            "At once, you feel a clawed hand slam against your throat and close around your trachea, its razor-sharp nails\n" +
+            "easily piercing the soft skin of your neck. The hand jerks back, taking a section of your throat with it to the sound\n" +
+            "of flesh being shred apart. Your agonized scream comes out as only a gurgled wheeze from what's left of your\n" +
+            "severed voicebox.",
+
+            "Two powerful hands grab each of your arms; one hand is wrapped just above your left wrist, the other on your right bicep.\n" +
+            "In an explosive crash of pain, you feel the simultaneous tearing of sinew at your right shoulder and left elbow joint as\n" +
+            "the monster in the darkness tears you apart like tissue paper. On the bright side, with both your brachial arteries severed,\n" +
+            "death should come quick.",
+
+            "You feel something shoot past the right side of your face and quickly grip the back of your head - a giant hand of the Amarok.\n" +
+            "You're thrown down face first into the cold stone floor, crushing your nose and orbital bones while all but of a few of your teeth\n" +
+            "rattle onto the floor. Lying facedown, the next sensation is that of a massive foot coming down full force just between your shoulder\n" +
+            "blades, snapping your spine, splintering your ribcage, and flattening every vital organ contained within.",
+
+            "It comes quick: the sense of a giant fist coming from overhead. The impact it makes with the top of your skull is so great that you don't\n" +
+            "even realize-",
+        };
+        return killNarratives[rng.Next(killNarratives.Length)];
     }
 
     private Direction RoomTypeStringToEnum(string str)
@@ -198,6 +229,7 @@
 
         return _world.GetRoomType(row, column) switch
         {
+            RoomType.Amarok => 'A',
             RoomType.Fountain => 'F',
             RoomType.Entrance => 'E',
             RoomType.Maelstrom => 'M',

@@ -11,11 +11,11 @@
     public World(MapSize mapSize)
     {
         MapSize = mapSize;
-        (Rows, Columns, int maxPitCount, int maxMaelstromCount) = mapSize switch
+        (Rows, Columns, int maxPitCount, int maxMaelstromCount, int maxAmarokCount) = mapSize switch
         {
-            MapSize.Small => (4, 4, 1, 1),
-            MapSize.Medium => (6, 6 , 2, 1),
-            MapSize.Large => (8, 8, 4, 2),
+            MapSize.Small => (4, 4, 1, 1, 1),
+            MapSize.Medium => (6, 6 , 2, 1, 2),
+            MapSize.Large => (8, 8, 4, 2, 3),
         };
         Rooms = new RoomType[Rows * Columns];
 
@@ -32,10 +32,24 @@
 
         AddHazards(maxPitCount, RoomType.Pit);
         AddHazards(maxMaelstromCount, RoomType.Maelstrom);
+        AddHazards(maxAmarokCount, RoomType.Amarok);
     }
 
     public void GetRoomDescription(int row, int column)
     {
+        (bool pit, bool maelstrom, bool amarok) nearbyHazards = DetectNearbyHazards(row, column);
+        if (nearbyHazards.pit)
+        {
+            GameTextPrinter.Write("You feel a draft. There is a pit in a nearby room.", TextType.Warning);
+        } 
+        if (nearbyHazards.maelstrom) { 
+            GameTextPrinter.Write("You hear the growling and groaning of a maelstrom nearby.", TextType.Warning);
+        }
+        if (nearbyHazards.amarok)
+        {
+            GameTextPrinter.Write("You can smell the rotten stench of an amarok in a nearby room.", TextType.Warning);
+        }
+
         RoomType roomType = Rooms[row * Rows + column];
         if (roomType == RoomType.Fountain)
         {
@@ -71,26 +85,23 @@
                 "slams you against the opposite wall.", TextType.Narrative);
             GameTextPrinter.Write("It seems you've encountered a malevolent, sentient wind - a Maelstrom!", TextType.Narrative);
         }
-        else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
-
-        (bool pit, bool maelstrom) nearbyHazards = DetectNearbyHazards(row, column);
-        if (nearbyHazards.pit)
+        else if (roomType == RoomType.Amarok)
         {
-            GameTextPrinter.Write("You feel a draft. There is a pit in a nearby room.", TextType.Warning);
-        } 
-        if (nearbyHazards.maelstrom) { 
-            GameTextPrinter.Write("You hear the growling and groaning of a maelstrom nearby.", TextType.Warning);
+            GameTextPrinter.Write("Stepping across the threshold of the room, your senses are overwhelmed by the odor of organic rot and decay.", TextType.Narrative);
+            GameTextPrinter.Write("Somewhere in the darkness nearby, you hear the approach of plodding footsteps and wheezing that could only belong\n" +
+                "to an Amarok", TextType.Narrative);
         }
+        else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
     }
 
-    public (bool, bool) DetectNearbyHazards(int row, int column)
+    public (bool, bool, bool) DetectNearbyHazards(int row, int column)
     {
         int rMin = row - 1 >= 0 ? row - 1 : 0;
         int rMax = row + 2 <= Rows ? row + 2 : Rows;
         int cMin = column - 1 >= 0 ? column - 1 : 0;
         int cMax = column + 2 <= Columns ? column + 2 : Columns;
 
-        (bool pit, bool maelstrom) hazards = (false, false);
+        (bool pit, bool maelstrom, bool amarok) hazards = (false, false, false);
         for (int r = rMin; r < rMax; ++r)
         {
             for (int c = cMin; c < cMax; ++c)
@@ -98,6 +109,7 @@
                 if ((r, c) == (row, column)) continue;
                 else if (Rooms[r * Rows + c] == RoomType.Pit) hazards.pit = true;
                 else if (Rooms[r * Rows + c] == RoomType.Maelstrom) hazards.maelstrom = true;
+                else if (Rooms[r * Rows + c] == RoomType.Amarok) hazards.amarok = true;
             }
         }
         return hazards;
@@ -134,7 +146,7 @@
         while (hazardCount < maxHazardCount)
         {
             (int row, int column) hazardLocation = (rng.Next(Rows), rng.Next(Columns));
-            if (hazardLocation == EntranceLocation || hazardLocation == FountainLocation) continue;
+            if (GetRoomType(hazardLocation.row, hazardLocation.column) != RoomType.Empty) continue;
 
             int hazardIndex = hazardLocation.row * Rows + hazardLocation.column;
             Rooms[hazardIndex] = hazardType;
@@ -157,4 +169,5 @@ public enum RoomType
     Fountain,
     Maelstrom,
     Pit,
+    Amarok,
 }
