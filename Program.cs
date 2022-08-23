@@ -7,25 +7,17 @@ MapSize mapSize = mapSizeString.ToLower() switch
 };
 bool debug = Convert.ToBoolean(GameTextPrinter.GetUserInputString("Debug?"));
 
-World world = new World(mapSize, debug);
+World world = new World(mapSize);
 Player player = new Player(world.EntranceLocation);
-TheFountainOfObjectsGame game = new TheFountainOfObjectsGame(player, world);
+TheFountainOfObjectsGame game = new TheFountainOfObjectsGame(player, world, debug);
 
-string separator = new string('-', 100);
 for (; ;)
 {
     Console.Clear();
 
-    if (debug) GameTextPrinter.Write(game.GetDebugMap(), TextType.Descriptive);
-
-    GameTextPrinter.Write(separator, TextType.Descriptive);
-    GameTextPrinter.Write(player.ToString(), TextType.Descriptive);
-    game.GetCurrentRoomDescription();
-
+    game.DisplayStatus();
     if (game.IsGameOver()) break;
-
-    string selection = GameTextPrinter.GetUserInputString("What do you want to do? ");
-    game.PerformAction(selection);
+    game.GetPlayerAction();
 }
 
 public static class GameTextPrinter
@@ -45,7 +37,7 @@ public static class GameTextPrinter
         };
 
         Console.ForegroundColor = foregroundColor;
-        Console.WriteLine(text);
+        Console.WriteLine($"{text}\n");
         Console.ForegroundColor = ConsoleColor.White;
     }
 
@@ -65,11 +57,33 @@ public class TheFountainOfObjectsGame
     private Player _player;
     private World _world;
     private bool _isPlayerAlive = true;
+    private bool _debug = false;
+    private readonly string StatusSeparator = new string('-', 100);
 
-    public TheFountainOfObjectsGame(Player player, World world)
+    public TheFountainOfObjectsGame(Player player, World world, bool debug = false)
     {
         _world = world;
         _player = player;
+        _debug = debug;
+    }
+
+    public void DisplayStatus()
+    {
+        Console.Clear();
+
+        if (_debug)
+        {
+            GameTextPrinter.Write(GetDebugMap(), TextType.Descriptive);
+        }
+        GameTextPrinter.Write(StatusSeparator, TextType.Descriptive);
+        GameTextPrinter.Write(_player.ToString(), TextType.Descriptive);
+        GetCurrentRoomDescription();
+    }
+
+    public void GetPlayerAction()
+    {
+        string selection = GameTextPrinter.GetUserInputString("What do you want to do? ");
+        PerformAction(selection);
     }
 
     public void PerformAction(string action)
@@ -81,7 +95,8 @@ public class TheFountainOfObjectsGame
                 EnableFountain();
                 break;
             default:
-                UpdatePlayerLocation(action);
+                Direction direction = RoomTypeStringToEnum(action);
+                UpdatePlayerLocation(direction);
                 break;
         }
     }
@@ -89,19 +104,47 @@ public class TheFountainOfObjectsGame
     public void GetCurrentRoomDescription()
     {
         _world.GetRoomDescription(_player.Row, _player.Column);
-        if (_world.GetRoomType(_player.Row, _player.Column) == RoomType.Pit)
+
+        RoomType roomType = _world.GetRoomType(_player.Row, _player.Column);
+        if (roomType == RoomType.Pit)
         {
             GameTextPrinter.Write(
                 "At long last, you hit the bottom of the pit to the sound of every bone in your body breaking\n" +
-                "and searing pain of every organ rupturing. With your concussed head whirring in the pitch darkness,\n" +
-                "in a final moment of clarity you realize that death is now inevitable." , TextType.Fatal);
+                "and the acute, agonizing pain of every organ rupturing. With your concussed head whirring in the\n" +
+                "pitch darkness, you realize in your final moments of clarity that death is now inevitable." , TextType.Fatal);
             _isPlayerAlive = false;
+        } else if (_world.GetRoomType(_player.Row, _player.Column) == RoomType.Maelstrom)
+        {
+            GameTextPrinter.Write(
+                "With a sudden, violent upheavel the Maelstrom lifts you off the ground and ingests you in its\n" +
+                "raging currents. Shortly after losing any sense of which way is up, you're tossed about in the darkness\n" +
+                "like a ragdoll. The winds finally subside; the Maelstrom has let you go somewhere in the darkness, with a\n" +
+                "few bruises as souveniours.", TextType.Narrative);
+            GameTextPrinter.Write("Press any key to continue...", TextType.Descriptive);
+            Console.ReadKey();
+            _world.RelocateMaelstrom(_player.Location);
+            UpdatePlayerLocation(Direction.North, false);
+            UpdatePlayerLocation(Direction.East, false);
+            UpdatePlayerLocation(Direction.East, false);
+            DisplayStatus();
         }
+    }
+
+    private Direction RoomTypeStringToEnum(string str)
+    {
+        return str switch
+        {
+            "move north" => Direction.North,
+            "move south" => Direction.South,
+            "move west" => Direction.West,
+            "move east" => Direction.East,
+            _ => Direction.Invalid,
+        };
     }
 
     private bool EnableFountain()
     {
-        if ((_player.Row, _player.Column) == _world.FountainLocation)
+        if (_player.Location == _world.FountainLocation)
         {
             if (!_world.IsFountainEnabled)
             {
@@ -120,27 +163,23 @@ public class TheFountainOfObjectsGame
         return false;
     }
 
-    private bool UpdatePlayerLocation(string command)
+    private bool UpdatePlayerLocation(Direction direction, bool showWallDirection = true)
     {
         string wallDirection = null;
-        switch (command) {
-            case "move north":
-            case "mn":
+        switch (direction) {
+            case Direction.North:
                 if (_player.Row == 0) wallDirection = "north";
                 else _player.UpdateLocation(Direction.North);
                 break;
-            case "move south":
-            case "ms":
+            case Direction.South:
                 if (_player.Row == _world.Rows - 1) wallDirection = "south";
                 else _player.UpdateLocation(Direction.South);
                 break;
-            case "move west":
-            case "mw":
+            case Direction.West:
                 if (_player.Column < 0) wallDirection = "west";
                 else _player.UpdateLocation(Direction.West);
                 break;
-            case "move east":
-            case "me":
+            case Direction.East:
                 if (_player.Column >= _world.Columns - 1) wallDirection = "east";
                 else _player.UpdateLocation(Direction.East);
                 break;
@@ -148,7 +187,7 @@ public class TheFountainOfObjectsGame
                 return false;
         }
 
-        if (wallDirection != null)
+        if (showWallDirection && wallDirection != null)
         {
             GameTextPrinter.Write($"There is a wall, you cannot go {wallDirection}!", TextType.Warning);
             Console.ReadLine();
@@ -159,7 +198,7 @@ public class TheFountainOfObjectsGame
     }
     public bool IsGameOver()
     {
-        if (_world.IsFountainEnabled && (_player.Row, _player.Column) == _world.EntranceLocation)
+        if (_world.IsFountainEnabled && _player.Location == _world.EntranceLocation)
         {
             GameTextPrinter.Write("You win!", TextType.Narrative);
             return true;
@@ -209,7 +248,7 @@ public class TheFountainOfObjectsGame
 
     private char GetRoomContents(int row, int column)
     {
-        if ((row, column) == (_player.Row, _player.Column)) return 'P';
+        if ((row, column) == _player.Location) return 'P';
 
         return _world.GetRoomType(row, column) switch
         {
@@ -226,6 +265,7 @@ public class Player
 {
     public int Row { get; private set; }
     public int Column { get; private set; }
+    public (int, int) Location { get => (Row, Column); }
 
     public Player((int, int) startingLocation)
     {
@@ -261,10 +301,12 @@ public class World
     public readonly (int Row, int Column) EntranceLocation;
     public readonly int Rows;
     public readonly int Columns;
+    public readonly MapSize MapSize;
     private readonly RoomType[] Rooms;
 
-    public World(MapSize mapSize, bool debug = false)
+    public World(MapSize mapSize)
     {
+        MapSize = mapSize;
         (Rows, Columns, int maxPitCount, int maxMaelstromCount) = mapSize switch
         {
             MapSize.Small => (4, 4, 1, 1),
@@ -313,17 +355,26 @@ public class World
             {
                 GameTextPrinter.Write("You see light coming from the cavern entrance.", TextType.Entrance);
             }
-        } else if (roomType == RoomType.Pit)
+        }
+        else if (roomType == RoomType.Pit)
         {
             GameTextPrinter.Write("As you step into the room, your foot fails to connect to solid ground as you feel your entire body weight fall forward.", TextType.Narrative);
 
-        } else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
+        }
+        else if (roomType == RoomType.Maelstrom)
+        {
+            GameTextPrinter.Write("Within seconds of entering the room, a powerful gust of wind throws you against the wall, and then \n" + "" +
+                "slams you against the opposite wall.", TextType.Narrative);
+            GameTextPrinter.Write("It seems you've encountered a malevolent, sentient wind - a Maelstrom!", TextType.Narrative);
+        }
+        else GameTextPrinter.Write("You stand in a dark, empty room.", TextType.EmptyRoom);
 
         (bool pit, bool maelstrom) nearbyHazards = DetectNearbyHazards(row, column);
         if (nearbyHazards.pit)
         {
             GameTextPrinter.Write("You feel a draft. There is a pit in a nearby room.", TextType.Warning);
-        } else if (nearbyHazards.maelstrom) { 
+        } 
+        if (nearbyHazards.maelstrom) { 
             GameTextPrinter.Write("You hear the growling and groaning of a maelstrom nearby.", TextType.Warning);
         }
     }
@@ -349,6 +400,14 @@ public class World
     }
 
     public RoomType GetRoomType(int row, int column) => Rooms[row * Rows + column];
+
+    public void RelocateMaelstrom((int row, int column) currentLocation)
+    {
+        Rooms[currentLocation.row * Rows + currentLocation.column] = RoomType.Empty;
+        int newRow = currentLocation.row + 1 < Rows ? currentLocation.row + 1 : Rows - 1;
+        int newColumn = currentLocation.column - 2 < 0 ? 0 : currentLocation.column - 2;
+        Rooms[newRow * Rows + newColumn] = RoomType.Maelstrom;
+    }
 
     private (int, int) GenerateEntranceLocation()
     {
@@ -386,6 +445,7 @@ public enum Direction
     North,
     South,
     West,
+    Invalid,
 }
 
 public enum MapSize
@@ -415,5 +475,3 @@ public enum TextType
     UserInput,
     Warning,
 }
-
-
