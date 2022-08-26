@@ -1,4 +1,6 @@
-﻿public class Player
+﻿namespace TFoO;
+
+public class Player
 {
     public int Row { get; private set; }
     public int Column { get; private set; }

@@ -1,4 +1,6 @@
-﻿public class World
+﻿namespace TFoO;
+
+public class World
 {
     public bool IsFountainEnabled = false;
     public readonly (int Row, int Column) FountainLocation;

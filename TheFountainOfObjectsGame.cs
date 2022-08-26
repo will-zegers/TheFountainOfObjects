@@ -1,4 +1,6 @@
-﻿public class TheFountainOfObjectsGame
+﻿namespace TFoO;
+
+public class TheFountainOfObjectsGame
 {
     private Player _player;
     private World _world;
@@ -34,6 +36,8 @@
 
     public void PerformAction(string action)
     {
+        if (String.IsNullOrEmpty(action)) return;
+
         String[] actionSplit = action.Split(' ');
         string verb = actionSplit[0];
         string param = actionSplit[1];

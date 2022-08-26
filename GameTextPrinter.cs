@@ -1,4 +1,6 @@
-﻿public static class GameTextPrinter
+﻿namespace TFoO;
+
+public static class GameTextPrinter
 {
     public static void Write(string text, TextType type)
     {

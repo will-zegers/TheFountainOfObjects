@@ -1,21 +1,30 @@
-﻿string mapSizeString = GameTextPrinter.GetUserInputString("Choose map size (small, medium, large):");
-MapSize mapSize = mapSizeString.ToLower() switch
+﻿namespace TFoO
 {
-    "small" => MapSize.Small,
-    "medium" => MapSize.Medium,
-    "large" => MapSize.Large,
-};
-bool debug = Convert.ToBoolean(GameTextPrinter.GetUserInputString("Debug?"));
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            string mapSizeString = GameTextPrinter.GetUserInputString("Choose map size (small, medium, large):");
+            MapSize mapSize = mapSizeString.ToLower() switch
+            {
+                "small" => MapSize.Small,
+                "medium" => MapSize.Medium,
+                "large" => MapSize.Large,
+            };
+            bool debug = Convert.ToBoolean(GameTextPrinter.GetUserInputString("Debug?"));
 
-World world = new World(mapSize);
-Player player = new Player(world.EntranceLocation);
-TheFountainOfObjectsGame game = new TheFountainOfObjectsGame(player, world, debug);
+            World world = new World(mapSize);
+            Player player = new Player(world.EntranceLocation);
+            TheFountainOfObjectsGame game = new TheFountainOfObjectsGame(player, world, debug);
 
-for (; ;)
-{
-    Console.Clear();
+            for (; ;)
+            {
+                Console.Clear();
 
-    game.DisplayStatus();
-    if (game.IsGameOver()) break;
-    game.GetPlayerAction();
+                game.DisplayStatus();
+                if (game.IsGameOver()) break;
+                game.GetPlayerAction();
+            }
+        }
+    }
 }
